@@ -1,1 +1,2 @@
 *.pt filter=lfs diff=lfs merge=lfs -text
+src/main/resources/models/mobileclip_b_torchscript.pt filter=lfs diff=lfs merge=lfs -text
