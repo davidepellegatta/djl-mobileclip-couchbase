@@ -1,4 +1,4 @@
-package com.couchbase.demo.mobileclip;
+package com.couchbase.demo.mobileclip.model;
 
 
 import ai.djl.huggingface.tokenizers.Encoding;

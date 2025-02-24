@@ -1,4 +1,4 @@
-package com.couchbase.demo.mobileclip;
+package com.couchbase.demo.mobileclip.model;
 
 import ai.djl.Device;
 import ai.djl.MalformedModelException;
@@ -10,31 +10,32 @@ import ai.djl.repository.zoo.Criteria;
 import ai.djl.repository.zoo.ModelNotFoundException;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.translate.*;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
+@Slf4j
+@Component
 public class MobileClipCouchbase {
-
-    private static final Logger logger
-            = LoggerFactory.getLogger(MobileClipCouchbase.class);
 
     public static void main(String[] args) throws IOException, ModelNotFoundException, MalformedModelException, TranslateException {
 
-        String modelPath = "models/mobileclip_s1_torchscript.pt"; // Adjust the path
+        String modelPath = "models/mobileclip_b_torchscript.pt"; // Adjust the path
         URL resourceUrl = MobileClipCouchbase.class.getClassLoader().getResource(modelPath);
 
-        String modelName = "mobileclip_s1";
+        String modelName = "mobileclip_b";
 
         ZooModel<NDList, NDList> clip;
         Predictor<Image, float[]> imageFeatureExtractor;
         Predictor<String, float[]> textFeatureExtractor;
 
-        logger.info(String.format("Model Path: %s ", resourceUrl.getPath()));
+        log.info(String.format("Model Path: %s ", resourceUrl.getPath()));
 
         Criteria<NDList, NDList> criteria = Criteria.builder()
                 .setTypes(NDList.class, NDList.class)
@@ -57,12 +58,9 @@ public class MobileClipCouchbase {
         //not working yet
         //float[] textEmbeddings = textFeatureExtractor.predict("photo of a dog");
 
-        logger.info(String.valueOf(embeddings.length));
-        logger.info(Arrays.toString(embeddings));
+        log.info(String.valueOf(embeddings.length));
+        log.info(Arrays.toString(embeddings));
 
-
-        //logger.info(String.valueOf(textEmbeddings.length));
-        //logger.info(Arrays.toString(textEmbeddings));
     }
 
 }
