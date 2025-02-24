@@ -4,15 +4,15 @@ import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Replicator;
 import com.couchbase.lite.ReplicatorActivityLevel;
 import com.couchbase.lite.ReplicatorChange;
-import com.couchbase.mobileclient.triggers.CountAndTimeTrigger;
-import com.couchbase.mobileclient.retry.RetryStrategy;
+import com.couchbase.demo.mobileclip.triggers.CountAndTimeTrigger;
+import com.couchbase.demo.mobileclip.retry.RetryStrategy;
 
 import java.util.Objects;
 import java.util.Set;
 
 import static com.couchbase.demo.mobileclip.replicator.ReplicationErrorHandler.ErrorCode.TEMPORAL_ERROR_CODES;
 import static com.couchbase.lite.ReplicatorActivityLevel.*;
-import static com.couchbase.mobileclient.replicator.ReplicationErrorHandler.ErrorCode.*;
+import static com.couchbase.demo.mobileclip.replicator.ReplicationErrorHandler.ErrorCode.*;
 
 
 public class ReplicationErrorHandler {

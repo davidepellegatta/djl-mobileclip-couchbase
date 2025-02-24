@@ -13,17 +13,20 @@ import java.util.function.Function;
 
 import static java.lang.String.join;
 import static java.util.stream.Collectors.toMap;
+import static com.couchbase.demo.mobileclip.config.CouchbaseLiteProperties.RemoteProperties;
+import static com.couchbase.demo.mobileclip.config.CouchbaseLiteProperties.CollectionProperties;
+
 
 
 @Data
 @Slf4j
 public class ReplicationManager implements AutoCloseable {
-    final CouchbaseLiteProperties.RemoteProperties properties;
+    final RemoteProperties properties;
     final Replicator replicator;
     final RetryStrategy retry; //TODO implement RetryStrategy
     final ReplicationListenersManager listenerManager;
 
-    public ReplicationManager(CouchbaseLiteProperties.RemoteProperties properties, Replicator replicator, RetryStrategy retry, ReplicationListenersManager listenerManager) {
+    public ReplicationManager(RemoteProperties properties, Replicator replicator, RetryStrategy retry, ReplicationListenersManager listenerManager) {
         this.properties = properties;
         this.replicator = replicator;
         this.retry = retry;
@@ -51,14 +54,14 @@ public class ReplicationManager implements AutoCloseable {
 
 
     public static class ReplicationManagerBuilder {
-        final CouchbaseLiteProperties.RemoteProperties properties;
+        final RemoteProperties properties;
 
         final ReplicationListenersManager listener;
 
         final ReplicatorBuilder replicatorBuilder;
 
 
-        public ReplicationManagerBuilder(CouchbaseLiteProperties.RemoteProperties properties, ReplicationListenersManager listener, Set<Collection> collections) {
+        public ReplicationManagerBuilder(RemoteProperties properties, ReplicationListenersManager listener, Set<Collection> collections) {
             this.properties = properties;
             this.listener = listener;
             this.replicatorBuilder = new ReplicatorBuilder(properties, collections);
@@ -73,16 +76,16 @@ public class ReplicationManager implements AutoCloseable {
     }
 
     public static class ReplicatorBuilder {
-        final CouchbaseLiteProperties.RemoteProperties properties;
+        final RemoteProperties properties;
         final Map<String, Collection> collections = new HashMap<>();
 
-        public ReplicatorBuilder(CouchbaseLiteProperties.RemoteProperties properties, Set<Collection> collections) {
+        public ReplicatorBuilder(RemoteProperties properties, Set<Collection> collections) {
             this.properties = properties;
             this.collections.putAll(collections.stream().collect(toMap(Collection::getName, Function.identity() )));
         }
 
         private Map<Collection, CollectionConfiguration> collectionsConfiguration() {
-            Map<String, CouchbaseLiteProperties.CollectionProperties> collectionsConfigs = properties.getCollections();
+            Map<String, CollectionProperties> collectionsConfigs = properties.getCollections();
             Map<Collection, CollectionConfiguration> collectionsMap = new HashMap<>();
             log.info("Setting listeners for collections: {}",join(",",collections.keySet()));
             collectionsConfigs.forEach( (name, p) -> {

@@ -1,12 +1,12 @@
 package com.couchbase.demo.mobileclip.database;
 
 import com.couchbase.demo.mobileclip.config.CouchbaseLiteProperties;
+import com.couchbase.demo.mobileclip.listeners.CounterCollectionChangeListener;
+import com.couchbase.demo.mobileclip.utils.DBUtils;
+import com.couchbase.demo.mobileclip.utils.FileUtils;
+import com.couchbase.demo.mobileclip.utils.ZipUtils;
 import com.couchbase.lite.*;
-import com.couchbase.mobileclient.config.CouchbaseLiteProperties;
-import com.couchbase.mobileclient.listeners.CounterCollectionChangeListener;
-import com.couchbase.mobileclient.utils.DBUtils;
-import com.couchbase.mobileclient.utils.FileUtils;
-import com.couchbase.mobileclient.utils.ZipUtils;
+
 import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

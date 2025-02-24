@@ -1,11 +1,11 @@
 package com.couchbase.demo.mobileclip.replicator;
 
+import com.couchbase.demo.mobileclip.listeners.StatusChangeListener;
 import com.couchbase.lite.DocumentReplicationListener;
 import com.couchbase.lite.ListenerToken;
 import com.couchbase.lite.Replicator;
 import com.couchbase.lite.ReplicatorChangeListener;
-import com.couchbase.mobileclient.listeners.AutoPurgeDocumentChangeListener;
-import com.couchbase.mobileclient.listeners.StatusChangeListener;
+import com.couchbase.demo.mobileclip.listeners.AutoPurgeDocumentChangeListener;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import static com.couchbase.mobileclient.config.CouchbaseLiteProperties.*;
+import static com.couchbase.demo.mobileclip.config.CouchbaseLiteProperties.*;
 
 @Slf4j
 @Data
