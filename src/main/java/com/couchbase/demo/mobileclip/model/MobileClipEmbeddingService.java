@@ -9,31 +9,31 @@ import ai.djl.ndarray.NDList;
 import ai.djl.repository.zoo.Criteria;
 import ai.djl.repository.zoo.ModelNotFoundException;
 import ai.djl.repository.zoo.ZooModel;
-import ai.djl.translate.*;
+import ai.djl.translate.NoopTranslator;
+import ai.djl.translate.TranslateException;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Paths;
-import java.util.Arrays;
 
-@Slf4j
 @Component
-public class MobileClipCouchbase {
+@Slf4j
+public class MobileClipEmbeddingService {
 
-    public static void main(String[] args) throws IOException, ModelNotFoundException, MalformedModelException, TranslateException {
+    //to move to props
+    private final String modelPath = "models/mobileclip_b_torchscript.pt";
+    private final String modelName = "mobileclip_b";
 
-        String modelPath = "models/mobileclip_b_torchscript.pt"; // Adjust the path
-        URL resourceUrl = MobileClipCouchbase.class.getClassLoader().getResource(modelPath);
 
-        String modelName = "mobileclip_b";
+    private final URL resourceUrl;
+    private final ZooModel<NDList, NDList> model;
+    private final Predictor<Image, float[]> imageFeatureExtractor;
+    private final Predictor<String, float[]> textFeatureExtractor;
 
-        ZooModel<NDList, NDList> model;
-        Predictor<Image, float[]> imageFeatureExtractor;
-        Predictor<String, float[]> textFeatureExtractor;
+    public MobileClipEmbeddingService() throws ModelNotFoundException, MalformedModelException, IOException {
+        this.resourceUrl = MobileClipCouchbase.class.getClassLoader().getResource(modelPath);
 
         log.info(String.format("Model Path: %s ", resourceUrl.getPath()));
 
@@ -50,17 +50,16 @@ public class MobileClipCouchbase {
 
         imageFeatureExtractor = model.newPredictor(new ImageTranslator());
         textFeatureExtractor = model.newPredictor(new ImageTextTranslator());
-
-        Image img = ImageFactory.getInstance().fromUrl("https://cdn.britannica.com/79/232779-050-6B0411D7/German-Shepherd-dog-Alsatian.jpg");
-
-        float[] embeddings = imageFeatureExtractor.predict(img);
-
-        //not working yet
-        //float[] textEmbeddings = textFeatureExtractor.predict("photo of a dog");
-
-        log.info(String.valueOf(embeddings.length));
-        log.info(Arrays.toString(embeddings));
-
     }
 
+    public float[] getEmbeddingsFromImage(String imageUrl) throws IOException, TranslateException {
+
+        Image img = ImageFactory.getInstance().fromUrl(imageUrl);
+        return imageFeatureExtractor.predict(img);
+    }
+
+    public float[] getEmbeddingsFromString(String text) throws TranslateException {
+
+        return textFeatureExtractor.predict(text);
+    }
 }

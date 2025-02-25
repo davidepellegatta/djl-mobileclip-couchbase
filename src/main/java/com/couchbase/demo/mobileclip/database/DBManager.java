@@ -21,6 +21,7 @@ import static java.lang.String.format;
 @Slf4j
 @Data
 public class DBManager {
+
     final DBUtils dbUtils = new DBUtils();
     final CouchbaseLiteProperties.LocalDBProperties properties;
     final CouchbaseLiteProperties.LogProperties logProperties;
@@ -81,7 +82,7 @@ public class DBManager {
 
 
     @Data
-    public static class DBManagerBuilder{
+    public static class DBManagerBuilder {
         CouchbaseLiteProperties.LocalDBProperties dbProperties;
         CouchbaseLiteProperties.LogProperties logProperties;
 
@@ -97,21 +98,28 @@ public class DBManager {
 
 
         protected void setup(){
+
             this.cfg =  databaseConfiguration();
+
             try {
+
                 prepareDatabase();
                 this.database = new Database(dbProperties.getDatabase(), cfg);
                 setupCollections();
+
             } catch (CouchbaseLiteException e ) {
                 log.error("Exception instantiating database", e);
             }
         }
 
         private DatabaseConfiguration databaseConfiguration() {
+
             DatabaseConfiguration cfg = new DatabaseConfiguration();
             cfg.setDirectory(dbProperties.getDbPath()); //System.getProperty("user.dir"));
+
             if(dbProperties.isEncryptedDb())
                 cfg.setEncryptionKey(new EncryptionKey(dbProperties.getEncryptionKey()));
+
             return cfg;
         }
 
@@ -142,19 +150,25 @@ public class DBManager {
             } else {
                 // Unzip database
                 if(srcDbZip.exists()) {
+
                     log.info("download path: {}", srcDbZip.getAbsolutePath());
                     log.info("unzipped path: {}", srcDb.getAbsolutePath());
                     ZipUtils.unzip(srcDbZip.getAbsolutePath(), srcDir);
-                }else {
+
+                } else {
+
                     log.warn("Skipping unzipping download database, source zip file not found at {}",srcDbZip.getAbsolutePath());
                 }
 
                 if(srcDb.exists()) {
+
                     log.info("Coping database: {}",srcDb);
                     log.info("... to database: {}",cfg.getDirectory());
                     log.info(" encrypted with: {}", cfg.getEncryptionKey());
                     Database.copy(srcDb, dbProperties.getDatabase(), cfg);
+
                 } else {
+
                     log.warn("Skipping copy database, source database not found at {}",srcDb.getAbsolutePath());
                 }
             }
@@ -180,15 +194,20 @@ public class DBManager {
         }
 
         private void setupCollections() {
+
             changeListenerTokens.clear();
-            log.info("Setting local '{}' database's collections",dbProperties.getDatabase());
+            log.info("Setting local '{}' database's collections", dbProperties.getDatabase());
+
             CouchbaseLiteProperties.ScopeProperties scope = dbProperties.getScope();
             scope.getCollections().forEach(collection -> {
+
                 try {
+
                     log.info(" - creating {}.{} collection", scope.getName(), collection);
                     Collection col = database.createCollection(collection, scope.getName());
                     //TODO setup individual collections listeners
                     setupListeners(col);
+
                 } catch (CouchbaseLiteException e) {
                     log.error("{} creating collection {}.{}", e.getClass().getSimpleName(), scope.getName(), collection);
                     throw new RuntimeException(e);
