@@ -1,11 +1,8 @@
 package com.couchbase.demo.mobileclip.listeners;
 
 import com.couchbase.lite.*;
-import com.couchbase.demo.mobileclip.database.DBManager;
-import com.couchbase.demo.mobileclip.replicator.ReplicationErrorHandler;
 import com.couchbase.demo.mobileclip.triggers.CountAndTimeTrigger.TriggerConfig;
 import com.couchbase.demo.mobileclip.triggers.FinalStatusTrigger;
-import com.couchbase.demo.mobileclip.triggers.ReplicationErrorTrigger;
 import com.couchbase.demo.mobileclip.triggers.StatusCountAndTimeTrigger;
 import lombok.Data;
 import lombok.SneakyThrows;

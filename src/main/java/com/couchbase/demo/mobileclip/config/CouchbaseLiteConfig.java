@@ -1,8 +1,8 @@
 package com.couchbase.demo.mobileclip.config;
 
 import com.couchbase.lite.*;
-import com.couchbase.demo.mobileclip.database.DBManager;
-import com.couchbase.demo.mobileclip.database.DBManager.DBManagerBuilder;
+import com.couchbase.demo.mobileclip.database.DatabaseService;
+import com.couchbase.demo.mobileclip.database.DatabaseService.DBManagerBuilder;
 import com.couchbase.demo.mobileclip.replicator.ReplicationListenersManager;
 import com.couchbase.demo.mobileclip.replicator.ReplicationListenersManager.ReplicationListenersManagerBuilder;
 import com.couchbase.demo.mobileclip.replicator.ReplicationManager;
@@ -48,13 +48,13 @@ public class CouchbaseLiteConfig {
     }
 
     @Bean
-    public DBManager dbManager() {
+    public DatabaseService dbManager() {
         return new DBManagerBuilder(this.properties.getLocal(), properties.getLog()).build();
     }
 
     @Bean
-    public ReplicationManager replicatorManager(DBManager dbManager, ReplicationListenersManager listenerManager) throws CouchbaseLiteException {
-        Set<Collection> collections = dbManager.getDatabase().getScope(properties.getLocal().getScope().getName()).getCollections();
+    public ReplicationManager replicatorManager(DatabaseService databaseService, ReplicationListenersManager listenerManager) throws CouchbaseLiteException {
+        Set<Collection> collections = databaseService.getDatabase().getScope(properties.getLocal().getScope().getName()).getCollections();
         return new ReplicationManagerBuilder(this.properties.getRemote(), listenerManager, collections).build();
     }
 

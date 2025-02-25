@@ -9,7 +9,7 @@ spring:
 
 couchbase:
   remote:
-    endpoint-url: wss://b4vrjjsetlmbluxp.apps.cloud.couchbase.com/pos_poc_endpoint_1
+    endpoint-url: wss://wazhi9tyzxyljdju.apps.cloud.couchbase.com/pos
     continuous: true
     replicator-type: PUSH_AND_PULL
     reset-checkpoint: false
@@ -24,7 +24,7 @@ couchbase:
         max-size: 10000
         max-duration: 1m
     collections:
-      monitorings:
+      photoClassification:
         documentIDs-filter:
         channels-filter:
     authenticator:
@@ -39,13 +39,11 @@ couchbase:
     flush-previous-db: false
     auto-purge: true
     scope:
-      name: wundermart
-      collections: monitorings
+      name: scopePOS
+      collections: photoClassification
   log:
     path: logs
-    level: debug
+    level: info
     max-size: 100000000
     rotation-count: 10
     plaintext: true
-
-

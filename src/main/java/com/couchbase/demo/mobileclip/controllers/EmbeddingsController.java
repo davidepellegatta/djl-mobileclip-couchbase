@@ -1,25 +1,53 @@
 package com.couchbase.demo.mobileclip.controllers;
 
 import ai.djl.translate.TranslateException;
-import com.couchbase.demo.mobileclip.model.MobileClipEmbeddingService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import com.couchbase.demo.mobileclip.models.*;
+import com.couchbase.demo.mobileclip.services.ClassificationService;
+import com.couchbase.demo.mobileclip.services.MobileClipEmbeddingService;
+import com.couchbase.lite.CouchbaseLiteException;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
 
-@RestController("embeddings")
+@RestController
+@RequestMapping("embeddings")
 public class EmbeddingsController {
 
-    private final MobileClipEmbeddingService embeddingService;
+    private final ClassificationService classificationService;
+    private final MobileClipEmbeddingService mobileClipEmbeddingService;
 
-    public EmbeddingsController(MobileClipEmbeddingService embeddingService) {
-        this.embeddingService = embeddingService;
+    public EmbeddingsController(ClassificationService classificationService, MobileClipEmbeddingService mobileClipEmbeddingService) {
+        this.classificationService = classificationService;
+        this.mobileClipEmbeddingService = mobileClipEmbeddingService;
     }
 
     @GetMapping("/image")
-    public float[] image(@RequestParam(required = true) String imageUrl) throws TranslateException, IOException {
+    public float[] image(@RequestParam(required = true) String imageUrl)
+                                                    throws TranslateException, IOException {
 
-        return embeddingService.getEmbeddingsFromImage(imageUrl);
+        return mobileClipEmbeddingService.getEmbeddingsFromImage(imageUrl);
     }
+
+    @PostMapping("/classification")
+    public ClassificationResponse saveClassification(@RequestBody(required = true) ClassificationRequest request)
+                                                    throws IOException, TranslateException, CouchbaseLiteException {
+
+        return classificationService.saveClassification(request);
+    }
+
+    @PostMapping("/prediction")
+    public PredictionResponse predictClassification(@RequestBody(required = true) PredictionRequest request)
+                                                    throws TranslateException, IOException, CouchbaseLiteException {
+
+        return classificationService.predictClassification(request);
+    }
+
+    @GetMapping("/availableLabels")
+    public AvailableLabelsResponse labels() throws CouchbaseLiteException {
+
+        return classificationService.getAvailableLabels();
+    }
+
 }

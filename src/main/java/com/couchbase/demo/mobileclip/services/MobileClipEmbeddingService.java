@@ -1,4 +1,4 @@
-package com.couchbase.demo.mobileclip.model;
+package com.couchbase.demo.mobileclip.services;
 
 import ai.djl.Device;
 import ai.djl.MalformedModelException;
@@ -11,9 +11,13 @@ import ai.djl.repository.zoo.ModelNotFoundException;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.translate.NoopTranslator;
 import ai.djl.translate.TranslateException;
+import com.couchbase.demo.mobileclip.djl.ImageTextTranslator;
+import com.couchbase.demo.mobileclip.djl.ImageTranslator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -33,7 +37,7 @@ public class MobileClipEmbeddingService {
     private final Predictor<String, float[]> textFeatureExtractor;
 
     public MobileClipEmbeddingService() throws ModelNotFoundException, MalformedModelException, IOException {
-        this.resourceUrl = MobileClipCouchbase.class.getClassLoader().getResource(modelPath);
+        this.resourceUrl = MobileClipEmbeddingService.class.getClassLoader().getResource(modelPath);
 
         log.info(String.format("Model Path: %s ", resourceUrl.getPath()));
 
@@ -58,8 +62,15 @@ public class MobileClipEmbeddingService {
         return imageFeatureExtractor.predict(img);
     }
 
-    public float[] getEmbeddingsFromString(String text) throws TranslateException {
+    public float[] getEmbeddingsFromImage(BufferedImage imageBlob) throws IOException, TranslateException {
 
+        Image img = ImageFactory.getInstance().fromImage(imageBlob);
+
+        return imageFeatureExtractor.predict(img);
+    }
+
+    public float[] getEmbeddingsFromString(String text) throws TranslateException {
+        //TODO: text feature extractor is not working yet. needs review.
         return textFeatureExtractor.predict(text);
     }
 }
