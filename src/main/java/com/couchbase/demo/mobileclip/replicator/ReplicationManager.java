@@ -21,6 +21,7 @@ import static com.couchbase.demo.mobileclip.config.CouchbaseLiteProperties.Colle
 @Data
 @Slf4j
 public class ReplicationManager implements AutoCloseable {
+
     final RemoteProperties properties;
     final Replicator replicator;
     final RetryStrategy retry; //TODO implement RetryStrategy
@@ -68,8 +69,7 @@ public class ReplicationManager implements AutoCloseable {
         }
 
 
-        public ReplicationManager build() {
-            Replicator replicator = replicatorBuilder.build();
+        public ReplicationManager build() {Replicator replicator = replicatorBuilder.build();
           //  setupListeners(replicator, executor);
             return new ReplicationManager(this.properties, replicator, null, listener);
         }

@@ -12,28 +12,28 @@ spring:
     time-zone: UTC
 
 couchbase:
-  remote:
-    endpoint-url: wss://wazhi9tyzxyljdju.apps.cloud.couchbase.com/pos
-    continuous: true
-    replicator-type: PUSH_AND_PULL
-    reset-checkpoint: false
-    websocket:
-      timeout: 10000
-      heartbeat: 15000
-    listeners:
-      status:
-        max-size: 10000
-        max-duration: 1m
-      counter:
-        max-size: 10000
-        max-duration: 1m
-    collections:
-      photoClassification:
-        documentIDs-filter:
-        channels-filter:
-    authenticator:
-      username: HelloKitty
-      password: HelloKitty1!
+#  remote:
+#    endpoint-url: wss://wazhi9tyzxyljdju.apps.cloud.couchbase.com/pos
+#    continuous: true
+#    replicator-type: PUSH_AND_PULL
+#    reset-checkpoint: false
+#    websocket:
+#      timeout: 10000
+#      heartbeat: 15000
+#    listeners:
+#      status:
+#        max-size: 10000
+#        max-duration: 1m
+#      counter:
+#        max-size: 10000
+#        max-duration: 1m
+#    collections:
+#      photoClassification:
+#        documentIDs-filter:
+#        channels-filter:
+#    authenticator:
+#      username:
+#      password:
   local:
     database: db
     db-path: data

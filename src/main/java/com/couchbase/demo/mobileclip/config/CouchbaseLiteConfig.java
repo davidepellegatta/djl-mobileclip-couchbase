@@ -38,11 +38,6 @@ public class CouchbaseLiteConfig {
     }
 
     @Bean
-    public ReplicationListenersManager listenerManager(Executor executor) {
-        return new ReplicationListenersManagerBuilder(executor, properties.getRemote().getListeners()).build();
-    }
-
-    @Bean
     public Executor executor() {
         return Executors.newCachedThreadPool();
     }
@@ -52,11 +47,16 @@ public class CouchbaseLiteConfig {
         return new DBManagerBuilder(this.properties.getLocal(), properties.getLog()).build();
     }
 
-    @Bean
+    /* @Bean
     public ReplicationManager replicatorManager(DatabaseService databaseService, ReplicationListenersManager listenerManager) throws CouchbaseLiteException {
         Set<Collection> collections = databaseService.getDatabase().getScope(properties.getLocal().getScope().getName()).getCollections();
         return new ReplicationManagerBuilder(this.properties.getRemote(), listenerManager, collections).build();
     }
 
+    @Bean
+    public ReplicationListenersManager listenerManager(Executor executor) {
+        return new ReplicationListenersManagerBuilder(executor, properties.getRemote().getListeners()).build();
+    }
+    */
 
 }

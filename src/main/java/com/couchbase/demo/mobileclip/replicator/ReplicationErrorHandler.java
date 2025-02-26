@@ -12,7 +12,6 @@ import java.util.Set;
 
 import static com.couchbase.demo.mobileclip.replicator.ReplicationErrorHandler.ErrorCode.TEMPORAL_ERROR_CODES;
 import static com.couchbase.lite.ReplicatorActivityLevel.*;
-import static com.couchbase.demo.mobileclip.replicator.ReplicationErrorHandler.ErrorCode.*;
 
 
 public class ReplicationErrorHandler {
@@ -20,8 +19,6 @@ public class ReplicationErrorHandler {
 
     final RetryStrategy retry;
     final CountAndTimeTrigger trigger = new CountAndTimeTrigger();
-
-
 
     public ReplicationErrorHandler(RetryStrategy retry) {
         this.retry = retry;
