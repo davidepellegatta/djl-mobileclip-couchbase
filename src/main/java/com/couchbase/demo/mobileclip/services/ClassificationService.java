@@ -54,6 +54,10 @@ public class ClassificationService {
 
     }
 
+    public void deleteClassification(DeleteClassificationRequest classificationRequest) throws CouchbaseLiteException {
+        dbService.deleteAllEmbeddingsByClassification(classificationRequest.getClassName());
+    }
+
     public AvailableLabelsResponse getAvailableLabels() throws CouchbaseLiteException {
 
         List<String> labels = dbService.findUniqueClasses();

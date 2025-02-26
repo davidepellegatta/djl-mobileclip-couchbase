@@ -8,8 +8,6 @@ import com.couchbase.lite.CouchbaseLiteException;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.List;
 
 @RestController
 @RequestMapping("embeddings")
@@ -48,6 +46,13 @@ public class EmbeddingsController {
     public AvailableLabelsResponse labels() throws CouchbaseLiteException {
 
         return classificationService.getAvailableLabels();
+    }
+
+    @DeleteMapping("/availableLabels")
+    public void deleteLabel(@RequestBody(required = true) DeleteClassificationRequest request)
+                                                    throws CouchbaseLiteException {
+
+        classificationService.deleteClassification(request);
     }
 
 }

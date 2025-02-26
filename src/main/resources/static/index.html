@@ -1,163 +1,298 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Offline vector search with Couchbase</title>
+    <title>Video Frame Classification</title>
     <style>
         body {
-            font-family: sans-serif;
-            text-align: center;
+          font-family: sans-serif;
+          text-align: center;
         }
+
         #logo {
-            width: 150px;
-            margin-bottom: 20px;
+          width: 150px;
+          margin-bottom: 20px;
         }
+
         #video-container {
-            position: relative;
-            display: inline-block;
+          position: relative;
+          display: flex;
+          justify-content: center;
+          align-items: flex-start;
+          flex-wrap: wrap;
         }
+
+        #video-wrapper {
+          position: relative;
+        }
+
+        #video-off {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: black;
+          color: white;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-size: 2em;
+          display: flex;
+          /* Show initially */
+        }
+
         #canvas {
-            display: none;
+          display: none;
         }
-        #predictions {
-            margin-top: 10px;
-            text-align: left;
-            display: block; /* Changed to block */
-            width: 640px; /* Match video width */
-            margin: 10px auto; /* Center predictions */
+
+        #controls {
+          margin-bottom: 10px;
         }
-        .prediction-item {
-            margin-bottom: 10px;
+
+        #results {
+          margin-top: 20px;
+          text-align: left;
+          display: inline-block;
         }
-        #content-container {
-            display: flex;
-            flex-direction: column; /* Changed to column */
-            justify-content: center;
-            align-items: center;
-        }
-        #camera-controls {
-            margin-bottom: 10px;
-        }
+
         #menu {
-            text-align: left;
-            margin-bottom: 10px;
+          text-align: left;
+          margin-bottom: 10px;
         }
+
         #menu a {
-            margin-right: 10px;
+          margin-right: 10px;
+        }
+
+        #class-list {
+          text-align: left;
+          margin-bottom: 10px;
+        }
+
+        #class-list ul {
+          list-style-type: none;
+          padding: 0;
+        }
+
+        #class-list li {
+          cursor: pointer;
+          padding: 5px;
+          border-bottom: 1px solid #eee;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        #class-list li:hover {
+          background-color: #f0f0f0;
+        }
+
+        .delete-button {
+          background-color: #f44336;
+          color: white;
+          border: none;
+          padding: 2px 5px;
+          cursor: pointer;
+          font-size: 0.8em;
+        }
+
+        /* Desktop Layout */
+        @media (min-width: 768px) {
+          #video-container {
+            display: flex;
+          }
+
+          #class-list {
+            margin-left: 20px;
+            align-self: flex-start;
+          }
+        }
+
+        /* Mobile Layout */
+        @media (max-width: 767px) {
+          #video-container {
+            display: block;
+          }
+
+          #class-list {
+            width: 100%;
+            margin-top: 20px;
+          }
         }
     </style>
 </head>
+
 <body>
 <img id="logo" src="/couchbase-logo.png" alt="Couchbase Logo">
-<h1>Offline vector search with Couchbase</h1>
+<h1>Video Frame Classification</h1>
 <div id="menu">
     <a href="http://localhost:8080/swagger-ui/index.html#/" target="_blank">Swagger</a>
-    <a href="http://localhost:8080/classification.html/" target="_blank">Classification</a>
+    <a href="http://localhost:8080/index.html/" target="_blank">Predictions</a>
 </div>
-<div id="camera-controls">
+<div id="controls">
     <button id="camera-toggle">Start Camera</button>
+    <input type="text" id="className" placeholder="Enter Class Name">
+    <button id="send-frame">Send Frame</button>
 </div>
-<div id="content-container">
-    <div id="video-container">
+<div id="video-container">
+    <div id="video-wrapper">
         <video id="video" width="640" height="480"></video>
+        <div id="video-off">Video Off</div>
         <canvas id="canvas" width="640" height="480"></canvas>
-        <div id="predictions"></div>
+    </div>
+    <div id="class-list">
+        <h2>Available Classes</h2>
+        <ul id="class-list-ul"></ul>
+        <p id="total-embeddings"></p>
     </div>
 </div>
+<div id="results"></div>
 
 <script>
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
-    const predictionsDiv = document.getElementById('predictions');
     const cameraToggle = document.getElementById('camera-toggle');
+    const sendFrameButton = document.getElementById('send-frame');
+    const classNameInput = document.getElementById('className');
+    const resultsDiv = document.getElementById('results');
+    const classListUl = document.getElementById('class-list-ul');
+    const totalEmbeddingsP = document.getElementById('total-embeddings');
+    const videoOffDiv = document.getElementById('video-off');
     let cameraStream = null;
-    let processing = false;
 
     async function startCamera() {
-        try {
-            cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = cameraStream;
-            video.play();
-            cameraToggle.textContent = 'Stop Camera';
-            processing = true;
-            processVideo();
-        } catch (err) {
-            console.error('Error accessing camera:', err);
-        }
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({video: true});
+        video.srcObject = cameraStream;
+        video.play();
+        cameraToggle.textContent = 'Stop Camera';
+        videoOffDiv.style.display = 'none';
+        // Hide the "Video Off" box
+      } catch (err) {
+        console.error('Error accessing camera:', err);
+      }
     }
 
     function stopCamera() {
-        if (cameraStream) {
-            cameraStream.getTracks().forEach(track => track.stop());
-            video.srcObject = null;
-            cameraStream = null;
-            cameraToggle.textContent = 'Start Camera';
-            processing = false;
-        }
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+        cameraStream = null;
+        cameraToggle.textContent = 'Start Camera';
+        videoOffDiv.style.display = 'flex';
+        // Show the "Video Off" box
+      }
     }
 
     async function captureFrame() {
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageDataURL = canvas.toDataURL('image/jpeg');
-        const base64Image = imageDataURL.replace(/^data:image\/(png|jpeg);base64,/, '');
-        return base64Image;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageDataURL = canvas.toDataURL('image/jpeg');
+      const base64Image = imageDataURL.replace(/^data:image\/(png|jpeg);base64,/, '');
+      return base64Image;
     }
 
-    async function sendFrameToAPI(base64Image) {
-        try {
-            const response = await fetch('http://localhost:8080/embeddings/prediction', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ image: base64Image }),
-            });
+    async function sendFrameToAPI(className, base64Image) {
+      try {
+        const response = await fetch('http://localhost:8080/embeddings/classification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({className: className, image: base64Image}),
+        });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('Error sending frame to API:', error);
-            return null;
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error('Error sending frame to API:', error);
+        return null;
+      }
     }
 
-    function visualizePredictions(data) {
-        predictionsDiv.innerHTML = '';
-        if (data && data.predictions && Array.isArray(data.predictions)) {
-            data.predictions.forEach(prediction => {
-                const predictionItem = document.createElement('div');
-                predictionItem.classList.add('prediction-item');
-                predictionItem.textContent = `${prediction.className}: ${prediction.distance.toFixed(4)}`;
-                predictionsDiv.appendChild(predictionItem);
-            });
-        } else {
-            predictionsDiv.textContent = 'No predictions received.';
+    async function fetchAvailableLabels() {
+      try {
+        const response = await fetch('http://localhost:8080/embeddings/availableLabels');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.json();
+        populateClassList(data.classes);
+        totalEmbeddingsP.textContent = `Total Embeddings: ${data.totalEmbeddings}`;
+      } catch (error) {
+        console.error('Error fetching available labels:', error);
+      }
     }
 
-    async function processVideo() {
-        if (processing) {
-            const base64Image = await captureFrame();
-            const predictions = await sendFrameToAPI(base64Image);
+    function populateClassList(classes) {
+      classListUl.innerHTML = '';
+      classes.forEach(className => {
+        const li = document.createElement('li');
+        li.textContent = className;
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'X';
+        deleteButton.className = 'delete-button';
+        deleteButton.addEventListener('click', async (event) => {
+          event.stopPropagation();
+          // Prevent li click
+          await deleteLabel(className);
+        });
+        li.appendChild(deleteButton);
+        li.addEventListener('click', () => {
+          classNameInput.value = className;
+        });
+        classListUl.appendChild(li);
+      });
+    }
 
-            console.log(predictions);
+    async function deleteLabel(className) {
+      try {
+        const response = await fetch('http://localhost:8080/embeddings/availableLabels', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({className: className}),
+        });
 
-            visualizePredictions(predictions);
-            requestAnimationFrame(processVideo);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        await fetchAvailableLabels();
+        // Refresh the list
+      } catch (error) {
+        console.error('Error deleting label:', error);
+      }
     }
 
     cameraToggle.addEventListener('click', () => {
-        if (cameraStream) {
-            stopCamera();
-        } else {
-            startCamera();
-        }
+      if (cameraStream) {
+        stopCamera();
+      } else {
+        startCamera();
+      }
     });
+
+    sendFrameButton.addEventListener('click', async () => {
+      const className = classNameInput.value;
+      const base64Image = await captureFrame();
+      const response = await sendFrameToAPI(className, base64Image);
+
+      if (response) {
+        resultsDiv.innerHTML = `<p>Response: ${JSON.stringify(response)}</p>`;
+      } else {
+        resultsDiv.innerHTML = `<p>Error: Could not send frame or receive response.</p>`;
+      }
+    });
+
+    fetchAvailableLabels();
+    // Fetch and display labels on page load
+    // stopCamera(); // No need to call stopCamera() here
 </script>
 </body>
 </html>

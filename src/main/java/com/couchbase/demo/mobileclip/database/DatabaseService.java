@@ -42,8 +42,37 @@ public class DatabaseService {
         this.listenerTokens.addAll(tokens);
     }
 
-    public Long countNumberOfLabels() throws CouchbaseLiteException {
 
+    public void deleteAllEmbeddingsByClassification(String classification) throws CouchbaseLiteException {
+
+        String queryStmt = format("select META().id as docKey FROM scopePOS.photoClassification WHERE className = $className");
+        Collection embeddingsCol = database.getCollection(EMBEDDINGS_COLLECTION, EMBEDDINGS_SCOPE);
+
+
+        Parameters params = new Parameters();
+        params.setString("className", classification);
+
+        Query q = database.createQuery(queryStmt);
+        q.setParameters(params);
+        ResultSet results = q.execute();
+
+        for(Result r:results) {
+
+            String docKey = r.getString("docKey");
+
+            Document document = embeddingsCol.getDocument(docKey);
+
+            if (document != null) {
+                embeddingsCol.delete(document);
+                log.info(String.format("Document %s deleted successfully", docKey));
+            } else {
+                log.info(String.format("Document with ID %s not found.", docKey));
+            }
+        }
+
+    }
+
+    public Long countNumberOfLabels() throws CouchbaseLiteException {
         String queryStmt = format("SELECT count(*) total FROM scopePOS.photoClassification");
         return database.createQuery(queryStmt).execute().allResults().get(0).getLong("total");
     }
@@ -71,11 +100,12 @@ public class DatabaseService {
         embeddingsCol.save(model.toMutable());
     }
 
+    //TODO: externalize precision
     public  List<PredictionDbModel> findNearbyEmbeddings(float[] embeddings) throws CouchbaseLiteException {
         String queryStmt = format("SELECT " +
                 "className, APPROX_VECTOR_DISTANCE(embeddings, $vectorParam) as distance " +
                 " FROM scopePOS.photoClassification " +
-                " WHERE APPROX_VECTOR_DISTANCE(embeddings, $vectorParam) < 0.4 " +
+                " WHERE APPROX_VECTOR_DISTANCE(embeddings, $vectorParam) < 0.2 " +
                 " LIMIT 3");
 
         ArrayList<Float> floatList = new ArrayList<>();
