@@ -1,4 +1,5 @@
 target/
+CouchbaseLiteTemp
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -11,6 +12,7 @@ target/
 *.iws
 *.iml
 *.ipr
+*.cbllog
 
 ### Eclipse ###
 .apt_generated
