@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Video Frame Classification</title>
+    <title>Offline vector search with Couchbase</title>
     <style>
         body {
           font-family: sans-serif;
@@ -45,67 +45,56 @@
           display: none;
         }
 
-        #controls {
+        #predictions {
+          margin-top: 10px;
+          text-align: left;
+          margin-left: 20px;
+          align-self: flex-start;
+          width: 200px;
+          /* Fixed width for the predictions box */
+        }
+
+        .prediction-item {
           margin-bottom: 10px;
         }
 
-        #results {
-          margin-top: 20px;
-          text-align: left;
-          display: inline-block;
+        #content-container {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+        }
+
+        #camera-controls {
+          margin-bottom: 10px;
         }
 
         #menu {
           text-align: left;
           margin-bottom: 10px;
+          white-space: nowrap;
+          /* Prevent wrapping */
         }
 
         #menu a {
           margin-right: 10px;
         }
 
-        #class-list {
-          text-align: left;
-          margin-bottom: 10px;
+        #online-status {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          display: inline-block;
+          margin-left: 10px;
+          margin-right: 5px;
         }
 
-        #class-list ul {
-          list-style-type: none;
-          padding: 0;
+        .online {
+          background-color: green;
         }
 
-        #class-list li {
-          cursor: pointer;
-          padding: 5px;
-          border-bottom: 1px solid #eee;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        #class-list li:hover {
-          background-color: #f0f0f0;
-        }
-
-        .delete-button {
-          background-color: #f44336;
-          color: white;
-          border: none;
-          padding: 2px 5px;
-          cursor: pointer;
-          font-size: 0.8em;
-        }
-
-        /* Desktop Layout */
-        @media (min-width: 768px) {
-          #video-container {
-            display: flex;
-          }
-
-          #class-list {
-            margin-left: 20px;
-            align-self: flex-start;
-          }
+        .offline {
+          background-color: red;
         }
 
         /* Mobile Layout */
@@ -114,52 +103,70 @@
             display: block;
           }
 
-          #class-list {
+          #predictions {
             width: 100%;
-            margin-top: 20px;
+            margin: 20px auto 0;
           }
+        }
+        #prediction-title{
+            font-weight: bold;
+            margin-bottom: 5px;
         }
     </style>
 </head>
 
 <body>
 <img id="logo" src="/couchbase-logo.png" alt="Couchbase Logo">
-<h1>Video Frame Classification</h1>
+<h1>Offline vector search with Couchbase</h1>
 <div id="menu">
-    <a href="http://localhost:8080/swagger-ui/index.html#/" target="_blank">Swagger</a>
-    <a href="http://localhost:8080/index.html/" target="_blank">Predictions</a>
+    <a href="http://localhost:8080/swagger-ui/index.html#/">Swagger</a>
+    <a href="http://localhost:8080/classification.html/">Classification</a>
+    <span id="online-status"></span>
+    <span id="online-text"></span>
 </div>
-<div id="controls">
+<div id="camera-controls">
     <button id="camera-toggle">Start Camera</button>
-    <input type="text" id="className" placeholder="Enter Class Name">
-    <button id="send-frame">Send Frame</button>
 </div>
-<div id="video-container">
-    <div id="video-wrapper">
-        <video id="video" width="640" height="480"></video>
-        <div id="video-off">Video Off</div>
-        <canvas id="canvas" width="640" height="480"></canvas>
-    </div>
-    <div id="class-list">
-        <h2>Available Classes</h2>
-        <ul id="class-list-ul"></ul>
-        <p id="total-embeddings"></p>
+<div id="content-container">
+    <div id="video-container">
+        <div id="video-wrapper">
+            <video id="video" width="640" height="480" autoplay></video>
+            <div id="video-off">Video Off</div>
+            <canvas id="canvas" width="640" height="480"></canvas>
+        </div>
+        <div id="predictions">
+            <div id="prediction-title">Predictions</div>
+        </div>
     </div>
 </div>
-<div id="results"></div>
 
 <script>
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
+    const predictionsDiv = document.getElementById('predictions');
     const cameraToggle = document.getElementById('camera-toggle');
-    const sendFrameButton = document.getElementById('send-frame');
-    const classNameInput = document.getElementById('className');
-    const resultsDiv = document.getElementById('results');
-    const classListUl = document.getElementById('class-list-ul');
-    const totalEmbeddingsP = document.getElementById('total-embeddings');
     const videoOffDiv = document.getElementById('video-off');
+    const onlineStatus = document.getElementById('online-status');
+    const onlineText = document.getElementById('online-text');
     let cameraStream = null;
+    let processing = false;
+
+    async function checkOnlineStatus() {
+      try {
+        const response = await fetch('https://www.google.com', {mode: 'no-cors'});
+        onlineText.textContent = 'Internet Online';
+        onlineStatus.className = 'online';
+      } catch (error) {
+        onlineText.textContent = 'Internet Offline';
+        onlineStatus.className = 'offline';
+      }
+    }
+
+    setInterval(checkOnlineStatus, 3000);
+    // Check every 3 seconds
+    checkOnlineStatus();
+    // Initial check
 
     async function startCamera() {
       try {
@@ -167,8 +174,9 @@
         video.srcObject = cameraStream;
         video.play();
         cameraToggle.textContent = 'Stop Camera';
+        processing = true;
+        processVideo();
         videoOffDiv.style.display = 'none';
-        // Hide the "Video Off" box
       } catch (err) {
         console.error('Error accessing camera:', err);
       }
@@ -180,8 +188,8 @@
         video.srcObject = null;
         cameraStream = null;
         cameraToggle.textContent = 'Start Camera';
+        processing = false;
         videoOffDiv.style.display = 'flex';
-        // Show the "Video Off" box
       }
     }
 
@@ -192,14 +200,14 @@
       return base64Image;
     }
 
-    async function sendFrameToAPI(className, base64Image) {
+    async function sendFrameToAPI(base64Image) {
       try {
-        const response = await fetch('http://localhost:8080/embeddings/classification', {
+        const response = await fetch('http://localhost:8080/embeddings/prediction', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({className: className, image: base64Image}),
+          body: JSON.stringify({image: base64Image}),
         });
 
         if (!response.ok) {
@@ -214,59 +222,29 @@
       }
     }
 
-    async function fetchAvailableLabels() {
-      try {
-        const response = await fetch('http://localhost:8080/embeddings/availableLabels');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+    function visualizePredictions(data) {
+        const predictionsContainer = document.getElementById('predictions');
+        predictionsContainer.innerHTML = '<div id="prediction-title">Predictions</div>'; // Reset and add title
+        if (data && data.predictions && Array.isArray(data.predictions)) {
+            data.predictions.forEach(prediction => {
+                const predictionItem = document.createElement('div');
+                predictionItem.classList.add('prediction-item');
+                predictionItem.textContent = `${prediction.className}: ${prediction.distance.toFixed(4)}`;
+                predictionsContainer.appendChild(predictionItem);
+            });
+        } else {
+            const noPredictions = document.createElement('div');
+            noPredictions.textContent = 'No predictions received.';
+            predictionsContainer.appendChild(noPredictions);
         }
-        const data = await response.json();
-        populateClassList(data.classes);
-        totalEmbeddingsP.textContent = `Total Embeddings: ${data.totalEmbeddings}`;
-      } catch (error) {
-        console.error('Error fetching available labels:', error);
-      }
     }
 
-    function populateClassList(classes) {
-      classListUl.innerHTML = '';
-      classes.forEach(className => {
-        const li = document.createElement('li');
-        li.textContent = className;
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = 'X';
-        deleteButton.className = 'delete-button';
-        deleteButton.addEventListener('click', async (event) => {
-          event.stopPropagation();
-          // Prevent li click
-          await deleteLabel(className);
-        });
-        li.appendChild(deleteButton);
-        li.addEventListener('click', () => {
-          classNameInput.value = className;
-        });
-        classListUl.appendChild(li);
-      });
-    }
-
-    async function deleteLabel(className) {
-      try {
-        const response = await fetch('http://localhost:8080/embeddings/availableLabels', {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({className: className}),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        await fetchAvailableLabels();
-        // Refresh the list
-      } catch (error) {
-        console.error('Error deleting label:', error);
+    async function processVideo() {
+      if (processing) {
+        const base64Image = await captureFrame();
+        const predictions = await sendFrameToAPI(base64Image);
+        visualizePredictions(predictions);
+        requestAnimationFrame(processVideo);
       }
     }
 
@@ -277,22 +255,8 @@
         startCamera();
       }
     });
-
-    sendFrameButton.addEventListener('click', async () => {
-      const className = classNameInput.value;
-      const base64Image = await captureFrame();
-      const response = await sendFrameToAPI(className, base64Image);
-
-      if (response) {
-        resultsDiv.innerHTML = `<p>Response: ${JSON.stringify(response)}</p>`;
-      } else {
-        resultsDiv.innerHTML = `<p>Error: Could not send frame or receive response.</p>`;
-      }
-    });
-
-    fetchAvailableLabels();
-    // Fetch and display labels on page load
-    // stopCamera(); // No need to call stopCamera() here
+    // Start with camera off and "Video Off" box shown
+    stopCamera();
 </script>
 </body>
 </html>
