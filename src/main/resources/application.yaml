@@ -1,6 +1,10 @@
 spring:
   application:
     name: "Demo Lite Java"
+  web:
+    resources:
+      static-locations:
+        - classpath:/static/
 
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss.SSS

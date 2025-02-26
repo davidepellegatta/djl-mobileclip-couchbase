@@ -75,7 +75,7 @@ public class DatabaseService {
         String queryStmt = format("SELECT " +
                 "className, APPROX_VECTOR_DISTANCE(embeddings, $vectorParam) as distance " +
                 " FROM scopePOS.photoClassification " +
-                " WHERE APPROX_VECTOR_DISTANCE(embeddings, $vectorParam) < 0.1 " +
+                " WHERE APPROX_VECTOR_DISTANCE(embeddings, $vectorParam) < 0.4 " +
                 " LIMIT 3");
 
         ArrayList<Float> floatList = new ArrayList<>();
@@ -268,7 +268,7 @@ public class DatabaseService {
 
             vectorIndexConfiguration
                     .setEncoding(VectorEncoding.none())
-                    .setMetric(VectorIndexConfiguration.DistanceMetric.DOT)
+                    .setMetric(VectorIndexConfiguration.DistanceMetric.COSINE)
                     .setLazy(false);
 
             scope.getCollections().forEach(collection -> {

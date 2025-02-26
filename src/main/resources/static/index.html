@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Offline vector search with Couchbase</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+        }
+        #logo {
+            width: 150px;
+            margin-bottom: 20px;
+        }
+        #video-container {
+            position: relative;
+            display: inline-block;
+        }
+        #canvas {
+            display: none;
+        }
+        #predictions {
+            margin-top: 10px;
+            text-align: left;
+            display: block; /* Changed to block */
+            width: 640px; /* Match video width */
+            margin: 10px auto; /* Center predictions */
+        }
+        .prediction-item {
+            margin-bottom: 10px;
+        }
+        #content-container {
+            display: flex;
+            flex-direction: column; /* Changed to column */
+            justify-content: center;
+            align-items: center;
+        }
+        #camera-controls {
+            margin-bottom: 10px;
+        }
+        #menu {
+            text-align: left;
+            margin-bottom: 10px;
+        }
+        #menu a {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+<img id="logo" src="/couchbase-logo.png" alt="Couchbase Logo">
+<h1>Offline vector search with Couchbase</h1>
+<div id="menu">
+    <a href="http://localhost:8080/swagger-ui/index.html#/" target="_blank">Swagger</a>
+    <a href="http://localhost:8080/classification.html/" target="_blank">Classification</a>
+</div>
+<div id="camera-controls">
+    <button id="camera-toggle">Start Camera</button>
+</div>
+<div id="content-container">
+    <div id="video-container">
+        <video id="video" width="640" height="480"></video>
+        <canvas id="canvas" width="640" height="480"></canvas>
+        <div id="predictions"></div>
+    </div>
+</div>
+
+<script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    const predictionsDiv = document.getElementById('predictions');
+    const cameraToggle = document.getElementById('camera-toggle');
+    let cameraStream = null;
+    let processing = false;
+
+    async function startCamera() {
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = cameraStream;
+            video.play();
+            cameraToggle.textContent = 'Stop Camera';
+            processing = true;
+            processVideo();
+        } catch (err) {
+            console.error('Error accessing camera:', err);
+        }
+    }
+
+    function stopCamera() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+            cameraStream = null;
+            cameraToggle.textContent = 'Start Camera';
+            processing = false;
+        }
+    }
+
+    async function captureFrame() {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageDataURL = canvas.toDataURL('image/jpeg');
+        const base64Image = imageDataURL.replace(/^data:image\/(png|jpeg);base64,/, '');
+        return base64Image;
+    }
+
+    async function sendFrameToAPI(base64Image) {
+        try {
+            const response = await fetch('http://localhost:8080/embeddings/prediction', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image: base64Image }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error sending frame to API:', error);
+            return null;
+        }
+    }
+
+    function visualizePredictions(data) {
+        predictionsDiv.innerHTML = '';
+        if (data && data.predictions && Array.isArray(data.predictions)) {
+            data.predictions.forEach(prediction => {
+                const predictionItem = document.createElement('div');
+                predictionItem.classList.add('prediction-item');
+                predictionItem.textContent = `${prediction.className}: ${prediction.distance.toFixed(4)}`;
+                predictionsDiv.appendChild(predictionItem);
+            });
+        } else {
+            predictionsDiv.textContent = 'No predictions received.';
+        }
+    }
+
+    async function processVideo() {
+        if (processing) {
+            const base64Image = await captureFrame();
+            const predictions = await sendFrameToAPI(base64Image);
+
+            console.log(predictions);
+
+            visualizePredictions(predictions);
+            requestAnimationFrame(processVideo);
+        }
+    }
+
+    cameraToggle.addEventListener('click', () => {
+        if (cameraStream) {
+            stopCamera();
+        } else {
+            startCamera();
+        }
+    });
+</script>
+</body>
+</html>
