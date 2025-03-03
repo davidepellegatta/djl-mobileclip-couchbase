@@ -31,7 +31,8 @@ If you want to start from a clean slate, just delete the `data` directory and re
 
 - adapting the build for supporting different cpu architecture (at the moment you need to change the dependencies of djl yourself)
 
-  ```  <dependency>
+  ```
+        <dependency>
             <groupId>ai.djl.pytorch</groupId>
             <artifactId>pytorch-native-cpu</artifactId>
             <classifier>osx-aarch64</classifier>
