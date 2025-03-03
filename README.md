@@ -1,4 +1,4 @@
-# Couchbase Lite offline image classification vector search with Mobileclip
+# Couchbase Lite offline image classification vector search with MobileClip
 
 In this demo we are exploring the use of Couchbase Lite for offline vector search.
 
