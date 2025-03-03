@@ -21,12 +21,33 @@ There are few images for testing the local database already included in the proj
 
 If you want to start from a clean slate, just delete the `data` directory and restart the application.
 
+### I wish I knew before
+
+- don't take pictures with your fingers... guess what? It will recognize fingers everywhere. So, don't.
+- the accuracy is astonishing
+- the models are pretty heavy (300-500GB..) wait ```git clone``` to finish properly.
+
 ### Future works:
 
 - adapting the build for supporting different cpu architecture (at the moment you need to change the dependencies of djl yourself)
+
+  ```  <dependency>
+            <groupId>ai.djl.pytorch</groupId>
+            <artifactId>pytorch-native-cpu</artifactId>
+            <classifier>osx-aarch64</classifier>
+        </dependency>
+  ```
+
+  you can work it around now by altering the ```classifier``` with your target architecture: [**Full list here**](https://djl.ai/engines/pytorch/pytorch-engine/#load-your-own-pytorch-native-library)
+  
 - containerize it
 - clean up some couchbase lite advanced technicalities not necessary to serve the purpose.
 - add [**Couchbase Capella App Services**](https://cloud.couchbase.com/) to sync the embeddings from cloud to edge
 - add support for mobile browsers
+
+## Requirements
+
+- Java on your machine 17+
+- maven
 
 
