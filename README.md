@@ -50,5 +50,6 @@ If you want to start from a clean slate, just delete the `data` directory and re
 
 - Java on your machine 17+
 - maven
+- Models are stored as Github LFS files. You need to install it first.
 
 
